@@ -7,3 +7,12 @@ type CreateTagRequest struct {
 type CreateTagResponse struct {
 	ID int64
 }
+
+type GetTagByIdRequest struct {
+	ID int64
+}
+
+type GetTagByIdResponse struct {
+	ID   int64
+	Name string
+}
