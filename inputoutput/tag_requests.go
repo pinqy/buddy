@@ -1,5 +1,10 @@
 package inputoutput
 
+type Tag struct {
+	ID   int64
+	Name string
+}
+
 type CreateTagRequest struct {
 	Name string
 }

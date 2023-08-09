@@ -27,7 +27,7 @@ func CreateCategory(req io.CreateCategoryRequest) (io.CreateCategoryResponse, er
 		return resp, fmt.Errorf("CreateCategory: %v", err)
 	}
 
-	// Try to fetch ID of inserted tag
+	// Try to fetch ID of inserted category
 	id, err := result.LastInsertId()
 	if err != nil {
 		return resp, fmt.Errorf("CreateCategory: %v", err)

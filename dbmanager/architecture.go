@@ -21,3 +21,9 @@ type Tag struct {
 	ID   int64
 	Name string
 }
+
+type ExpenseTag struct {
+	ID        int64
+	ExpenseID int64
+	TagId     int64
+}
