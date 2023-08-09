@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/pinqy/buddy/inputoutput"
+	io "github.com/pinqy/buddy/inputoutput"
 )
 
-func CreateTag(req inputoutput.CreateTagRequest) (inputoutput.CreateTagResponse, error) {
-	var resp inputoutput.CreateTagResponse
+func CreateTag(req io.CreateTagRequest) (io.CreateTagResponse, error) {
+	var resp io.CreateTagResponse
 
 	// Check for valid tag name
 	if len(req.Name) == 0 {
@@ -38,8 +38,8 @@ func CreateTag(req inputoutput.CreateTagRequest) (inputoutput.CreateTagResponse,
 	return resp, nil
 }
 
-func GetTagById(req inputoutput.GetTagByIdRequest) (inputoutput.GetTagByIdResponse, error) {
-	var resp inputoutput.GetTagByIdResponse
+func GetTagById(req io.GetTagByIdRequest) (io.GetTagByIdResponse, error) {
+	var resp io.GetTagByIdResponse
 
 	// Check for valid ID
 	if req.ID < 1 {
