@@ -1,6 +1,6 @@
 package inputoutput
 
-type Expense struct {
+type ExpenseObject struct {
 	ID           int64
 	CategoryName string
 	Amount       float32

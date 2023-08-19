@@ -1,6 +1,6 @@
 package inputoutput
 
-type Tag struct {
+type TagObject struct {
 	ID   int64
 	Name string
 }
