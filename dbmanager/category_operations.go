@@ -49,7 +49,7 @@ func (dbc *DBClient) GetCategoryById(req io.GetCategoryByIdRequest) (io.GetCateg
 	row := db.QueryRow("SELECT * FROM category WHERE id = ?", req.ID)
 	if err := row.Scan(&category.ID, &category.Name, &category.Description); err != nil {
 		if err == sql.ErrNoRows {
-			return resp, fmt.Errorf("GetCategoryById: no tag with ID %d", req.ID)
+			return resp, fmt.Errorf("GetCategoryById: no category with ID %d", req.ID)
 		}
 		return resp, fmt.Errorf("GetCategoryById: %v", err)
 	}
