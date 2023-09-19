@@ -1,15 +1,15 @@
 package inputoutput
 
 type ExpenseObject struct {
-	ID           int64
-	CategoryName string
-	Amount       float32
-	Day          int64
-	Month        int64
-	Year         int64
-	Location     string
-	Notes        string
-	TagNames     []string
+	ID       int64
+	Category CategoryObject
+	Amount   float32
+	Day      int64
+	Month    int64
+	Year     int64
+	Location string
+	Notes    string
+	Tags     []TagObject
 }
 
 type CreateExpenseRequest struct {
@@ -48,5 +48,5 @@ type GetTagsByExpenseIdRequest struct {
 }
 
 type GetTagsByExpenseIdResponse struct {
-	Tags []GetTagByIdResponse
+	Tags []TagObject
 }

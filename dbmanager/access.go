@@ -7,6 +7,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+var client *DBClient
+
 // var TABLE_NAMES = []string{"category", "tag", "expense"}
 
 // TODO: get rid of hard coded creds
@@ -18,7 +20,7 @@ var cfg = mysql.Config{
 	DBName: "buddy",
 }
 
-func connect() (*sql.DB, error) {
+func initDB() (*sql.DB, error) {
 	// Get a database handle.
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
@@ -33,4 +35,16 @@ func connect() (*sql.DB, error) {
 
 	log.Printf("Successfully connected to buddy database!")
 	return db, nil
+}
+
+func GetDBClient() (*DBClient, error) {
+	if client != nil {
+		return client, nil
+	}
+
+	db, err := initDB()
+	if err != nil {
+		return nil, err
+	}
+	return &DBClient{database: db}, nil
 }

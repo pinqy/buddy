@@ -7,7 +7,7 @@ import (
 	io "github.com/pinqy/buddy/inputoutput"
 )
 
-func CreateTag(req io.CreateTagRequest) (io.CreateTagResponse, error) {
+func (dbc *DBClient) CreateTag(req io.CreateTagRequest) (io.CreateTagResponse, error) {
 	var resp io.CreateTagResponse
 
 	// Check for valid tag name
@@ -15,11 +15,7 @@ func CreateTag(req io.CreateTagRequest) (io.CreateTagResponse, error) {
 		return resp, fmt.Errorf("CreateTag: cannot create tag with no name")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("CreateTag: %v", err)
-	}
+	db := dbc.database
 
 	// Try insert tag into db
 	result, err := db.Exec("INSERT INTO tag (name) VALUES (?)", req.Name)
@@ -38,7 +34,7 @@ func CreateTag(req io.CreateTagRequest) (io.CreateTagResponse, error) {
 	return resp, nil
 }
 
-func GetTagById(req io.GetTagByIdRequest) (io.GetTagByIdResponse, error) {
+func (dbc *DBClient) GetTagById(req io.GetTagByIdRequest) (io.GetTagByIdResponse, error) {
 	var resp io.GetTagByIdResponse
 
 	// Check for valid ID
@@ -46,16 +42,12 @@ func GetTagById(req io.GetTagByIdRequest) (io.GetTagByIdResponse, error) {
 		return resp, fmt.Errorf("GetTagById: ID cannot be zero or negative")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("GetTagById: %v", err)
-	}
+	db := dbc.database
 
 	// Try get tag by ID
 	var tag Tag
 	row := db.QueryRow("SELECT * FROM tag WHERE id = ?", req.ID)
-	if err = row.Scan(&tag.ID, &tag.Name); err != nil {
+	if err := row.Scan(&tag.ID, &tag.Name); err != nil {
 		if err == sql.ErrNoRows {
 			return resp, fmt.Errorf("GetTagById: no tag with ID %d", req.ID)
 		}

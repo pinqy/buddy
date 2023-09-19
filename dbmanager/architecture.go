@@ -1,6 +1,13 @@
 package dbmanager
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
+
+type DBClient struct {
+	database *sql.DB
+}
 
 type Expense struct {
 	ID         int64

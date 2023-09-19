@@ -7,7 +7,7 @@ import (
 	io "github.com/pinqy/buddy/inputoutput"
 )
 
-func CreateCategory(req io.CreateCategoryRequest) (io.CreateCategoryResponse, error) {
+func (dbc *DBClient) CreateCategory(req io.CreateCategoryRequest) (io.CreateCategoryResponse, error) {
 	var resp io.CreateCategoryResponse
 
 	// Check for valid category arguments
@@ -15,11 +15,7 @@ func CreateCategory(req io.CreateCategoryRequest) (io.CreateCategoryResponse, er
 		return resp, fmt.Errorf("CreateCategory: cannot create category with no name")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("CreateCategory: %v", err)
-	}
+	db := dbc.database
 
 	// Try insert category into db
 	result, err := db.Exec("INSERT INTO category (name, description) VALUES (?, ?)", req.Name, req.Description)
@@ -38,7 +34,7 @@ func CreateCategory(req io.CreateCategoryRequest) (io.CreateCategoryResponse, er
 	return resp, nil
 }
 
-func GetCategoryById(req io.GetCategoryByIdRequest) (io.GetCategoryByIdResponse, error) {
+func (dbc *DBClient) GetCategoryById(req io.GetCategoryByIdRequest) (io.GetCategoryByIdResponse, error) {
 	var resp io.GetCategoryByIdResponse
 
 	// Check for valid ID
@@ -46,16 +42,12 @@ func GetCategoryById(req io.GetCategoryByIdRequest) (io.GetCategoryByIdResponse,
 		return resp, fmt.Errorf("GetCategoryById: ID cannot be zero or negative")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("GetCategoryById: %v", err)
-	}
+	db := dbc.database
 
 	// Try get category by ID
 	var category Category
 	row := db.QueryRow("SELECT * FROM category WHERE id = ?", req.ID)
-	if err = row.Scan(&category.ID, &category.Name, &category.Description); err != nil {
+	if err := row.Scan(&category.ID, &category.Name, &category.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return resp, fmt.Errorf("GetCategoryById: no tag with ID %d", req.ID)
 		}

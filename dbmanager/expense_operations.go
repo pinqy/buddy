@@ -9,7 +9,7 @@ import (
 	io "github.com/pinqy/buddy/inputoutput"
 )
 
-func CreateExpense(req io.CreateExpenseRequest) (io.CreateExpenseResponse, error) {
+func (dbc *DBClient) CreateExpense(req io.CreateExpenseRequest) (io.CreateExpenseResponse, error) {
 	var resp io.CreateExpenseResponse
 
 	// Validate required fields
@@ -22,15 +22,11 @@ func CreateExpense(req io.CreateExpenseRequest) (io.CreateExpenseResponse, error
 		return resp, fmt.Errorf("CreateExpense: %v", err)
 	}
 
-	if !checkTagIdsValid(req.TagIDs) {
+	if !checkTagIdsValid(dbc, req.TagIDs) {
 		return resp, fmt.Errorf("CreateExpense: one or more tagIds do not exist")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("CreateExpense: %v", err)
-	}
+	db := dbc.database
 
 	// Try insert expense into db
 	result, err := db.Exec("INSERT INTO expense (category_id, amount, date, location, notes) VALUES (?, ?, ?, ?, ?)", req.CategoryId, req.Amount, date, req.Location, req.Notes)
@@ -61,7 +57,7 @@ func CreateExpense(req io.CreateExpenseRequest) (io.CreateExpenseResponse, error
 	return resp, nil
 }
 
-func GetExpenseById(req io.GetExpenseByIdRequest) (io.GetExpenseByIdResponse, error) {
+func (dbc *DBClient) GetExpenseById(req io.GetExpenseByIdRequest) (io.GetExpenseByIdResponse, error) {
 	var resp io.GetExpenseByIdResponse
 
 	// Check for valid ID
@@ -69,16 +65,12 @@ func GetExpenseById(req io.GetExpenseByIdRequest) (io.GetExpenseByIdResponse, er
 		return resp, fmt.Errorf("GetExpenseById: ID cannot be zero or negative")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("GetExpenseById: %v", err)
-	}
+	db := dbc.database
 
 	// Try get expense by ID
 	var expense Expense
 	row := db.QueryRow("SELECT * FROM category WHERE id = ?", req.ID)
-	if err = row.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Date, &expense.Location, &expense.Notes); err != nil {
+	if err := row.Scan(&expense.ID, &expense.CategoryID, &expense.Amount, &expense.Date, &expense.Location, &expense.Notes); err != nil {
 		if err == sql.ErrNoRows {
 			return resp, fmt.Errorf("GetExpenseById: no tag with ID %d", req.ID)
 		}
@@ -88,14 +80,17 @@ func GetExpenseById(req io.GetExpenseByIdRequest) (io.GetExpenseByIdResponse, er
 	// Try get category name from ID
 	var category io.GetCategoryByIdResponse
 	if expense.CategoryID > 0 {
-		cat, err := GetCategoryById(io.GetCategoryByIdRequest{ID: expense.CategoryID})
+		cat, err := dbc.GetCategoryById(io.GetCategoryByIdRequest{ID: expense.CategoryID})
 		if err != nil {
 			return resp, fmt.Errorf("GetExpenseById: %v", err)
 		}
 		category = cat
 	}
 
-	tagNames, err := getTagNames(req.ID)
+	tagNames, err := getTagNames(dbc, req.ID)
+	if err != nil {
+		return resp, nil
+	}
 
 	// Return category found
 	resp.ID = expense.ID
@@ -109,7 +104,7 @@ func GetExpenseById(req io.GetExpenseByIdRequest) (io.GetExpenseByIdResponse, er
 	return resp, nil
 }
 
-func GetTagsByExpenseId(req io.GetTagsByExpenseIdRequest) (io.GetTagsByExpenseIdResponse, error) {
+func (dbc *DBClient) GetTagsByExpenseId(req io.GetTagsByExpenseIdRequest) (io.GetTagsByExpenseIdResponse, error) {
 	var resp io.GetTagsByExpenseIdResponse
 	var tags []io.GetTagByIdResponse
 
@@ -118,11 +113,7 @@ func GetTagsByExpenseId(req io.GetTagsByExpenseIdRequest) (io.GetTagsByExpenseId
 		return resp, fmt.Errorf("GetTagsByExpenseId: ID cannot be zero or negative")
 	}
 
-	// Try connect to db
-	db, err := connect()
-	if err != nil {
-		return resp, fmt.Errorf("GetTagsByExpenseId: %v", err)
-	}
+	db := dbc.database
 
 	// Try get tags by expense ID
 	rows, err := db.Query("SELECT tag_id FROM expense_tags WHERE expense_id = ?", req.ExpenseID)
@@ -138,7 +129,7 @@ func GetTagsByExpenseId(req io.GetTagsByExpenseIdRequest) (io.GetTagsByExpenseId
 			return resp, fmt.Errorf("GetTagsByExpenseId: %v", err)
 		}
 
-		tag, err := GetTagById(io.GetTagByIdRequest{ID: tagId})
+		tag, err := dbc.GetTagById(io.GetTagByIdRequest{ID: tagId})
 		if err != nil {
 			return resp, fmt.Errorf("GetTagsByExpenseId: %v", err)
 		}
@@ -149,9 +140,9 @@ func GetTagsByExpenseId(req io.GetTagsByExpenseIdRequest) (io.GetTagsByExpenseId
 	return resp, nil
 }
 
-func checkTagIdsValid(tagIDs []int64) bool {
+func checkTagIdsValid(dbc *DBClient, tagIDs []int64) bool {
 	for _, ID := range tagIDs {
-		_, err := GetTagById(io.GetTagByIdRequest{ID: ID})
+		_, err := dbc.GetTagById(io.GetTagByIdRequest{ID: ID})
 		if err != nil {
 			return false
 		}
@@ -160,10 +151,10 @@ func checkTagIdsValid(tagIDs []int64) bool {
 	return true
 }
 
-func getTagNames(expenseId int64) ([]string, error) {
+func getTagNames(dbc *DBClient, expenseId int64) ([]string, error) {
 	var tagNames []string
 
-	tags, err := GetTagsByExpenseId(io.GetTagsByExpenseIdRequest{ExpenseID: expenseId})
+	tags, err := dbc.GetTagsByExpenseId(io.GetTagsByExpenseIdRequest{ExpenseID: expenseId})
 	if err != nil {
 		return []string{}, fmt.Errorf("Failed to get tag names for expenseId: %d", expenseId)
 	}
